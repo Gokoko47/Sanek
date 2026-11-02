@@ -35,12 +35,29 @@ edit(java+'messenger/MessagesController.java',
      '                    if (dialogId == 0) { org.telegram.messenger.pakostnik.LocalArchive.get(currentAccount).deleted(arrayList); org.telegram.messenger.pakostnik.PakostnikAI.get(currentAccount).onDeleted(arrayList); }\n                    getNotificationCenter().postNotificationName(NotificationCenter.messagesDeleted, arrayList, -dialogId, false);')
 edit(java+'ui/ActionBar/Theme.java',
      '        String themesString = themeConfig.getString("themes2", null);',
-     '        ThemeInfo pakostnikTheme = new ThemeInfo();\n        pakostnikTheme.name = "Pakostnik";\n        pakostnikTheme.assetName = "pakostnik.attheme";\n        pakostnikTheme.previewBackgroundColor = 0xff080808;\n        pakostnikTheme.previewInColor = 0xff161616;\n        pakostnikTheme.previewOutColor = 0xff301214;\n        pakostnikTheme.sortIndex = 5;\n        themes.add(pakostnikTheme);\n        themesDict.put("Pakostnik", pakostnikTheme);\n        String themesString = themeConfig.getString("themes2", null);')
+     '        ThemeInfo pakostnikTheme = new ThemeInfo();\n        pakostnikTheme.name = "Pakostnik";\n        pakostnikTheme.assetName = "pakostnik.attheme";\n        pakostnikTheme.previewBackgroundColor = 0xff000000;\n        pakostnikTheme.previewInColor = 0xff161616;\n        pakostnikTheme.previewOutColor = 0xff202020;\n        pakostnikTheme.sortIndex = 5;\n        themes.add(pakostnikTheme);\n        themesDict.put("Pakostnik", pakostnikTheme);\n        String themesString = themeConfig.getString("themes2", null);')
 edit(java+'ui/ActionBar/Theme.java','String theme = preferences.getString("theme", null);','String theme = preferences.getString("theme", "Pakostnik");')
 edit(java+'ui/ActionBar/Theme.java','theme = preferences.getString("nighttheme", null);','theme = preferences.getString("nighttheme", "Pakostnik");')
 edit(java+'ui/ActionBar/Theme.java',
-     '                chat_msgTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);',
-     '                chat_msgTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);\n                chat_msgTextPaint.setTypeface(android.graphics.Typeface.MONOSPACE);')
+     '            chat_msgTextPaint.setTextSize(dp(SharedConfig.fontSize));',
+     '            chat_msgTextPaint.setTypeface(org.telegram.messenger.pakostnik.PakostnikAppearance.typeface());\n            chat_msgTextPaint.setTextSize(dp(SharedConfig.fontSize));')
+edit(java+'ui/ActionBar/Theme.java',
+     '        return stringMap;\n    }\n\n    public static void createCommonResources(Context context) {',
+     '        if ("pakostnik.attheme".equals(assetName)) org.telegram.messenger.pakostnik.PakostnikAppearance.customize(stringMap);\n        return stringMap;\n    }\n\n    public static void createCommonResources(Context context) {')
+edit(java+'ui/ActionBar/Theme.java',
+     '                dialogs_namePaint[a].setTypeface(AndroidUtilities.bold());',
+     '                dialogs_namePaint[a].setTypeface(org.telegram.messenger.pakostnik.PakostnikAppearance.mono() ? android.graphics.Typeface.MONOSPACE : AndroidUtilities.bold());')
+edit(java+'ui/ActionBar/Theme.java',
+     '                dialogs_messagePaint[a] = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);',
+     '                dialogs_messagePaint[a] = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);\n                dialogs_messagePaint[a].setTypeface(org.telegram.messenger.pakostnik.PakostnikAppearance.typeface());')
+edit(java+'ui/ActionBar/Theme.java',
+     '                dialogs_nameEncryptedPaint[a].setTypeface(AndroidUtilities.bold());',
+     '                dialogs_nameEncryptedPaint[a].setTypeface(org.telegram.messenger.pakostnik.PakostnikAppearance.mono() ? android.graphics.Typeface.MONOSPACE : AndroidUtilities.bold());')
+edit(java+'ui/ActionBar/Theme.java',
+     '                dialogs_messagePrintingPaint[a] = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);',
+     '                dialogs_messagePrintingPaint[a] = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);\n                dialogs_messagePrintingPaint[a].setTypeface(org.telegram.messenger.pakostnik.PakostnikAppearance.typeface());')
+edit(java+'messenger/SharedConfig.java','public static int bubbleRadius = 17;','public static int bubbleRadius = 0;')
+edit(java+'messenger/SharedConfig.java','bubbleRadius = preferences.getInt("bubbleRadius", 17);','bubbleRadius = preferences.getInt("bubbleRadius", 0);')
 
 edit(java+'ui/ChatActivity.java',
      '        ArrayList<MessageObject> messArr = (ArrayList<MessageObject>) args[2];',
