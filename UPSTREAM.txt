@@ -1,0 +1,7 @@
+Repository: https://github.com/DrKLO/Telegram
+Revision: 3de37c8cfb039452be7398909461da6288babf15
+Upstream version: 13.1.1 (7237)
+License: GNU GPL version 2 (see upstream LICENSE)
+Pakostnik overlay: GPL-2.0-or-later
+The original repository and all pinned submodules are downloaded by bootstrap.sh.
+No change to a newer upstream revision is made automatically.

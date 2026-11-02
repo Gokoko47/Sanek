@@ -1,0 +1,4 @@
+# Replace with your domain. DNS must point to this server.
+ai.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
