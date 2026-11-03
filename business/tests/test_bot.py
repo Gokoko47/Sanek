@@ -25,8 +25,9 @@ class TelegramFake:
     def sent(self):return [p for m,p in self.calls if m=='sendMessage' and 'business_connection_id' in p]
 
 class AIFake:
-    def __init__(self):self.calls=[];self.answer='Привет! Как настроение?';self.hook=None
-    def reply(self,text,style):
+    def __init__(self):self.calls=[];self.examples=[];self.answer='Привет! Как настроение?';self.hook=None
+    def reply(self,text,style,examples=None):
+        self.examples=examples or []
         self.calls.append((text,style))
         if self.hook:self.hook()
         return self.answer
@@ -145,12 +146,61 @@ class BotTests(unittest.TestCase):
         self.api.call=call
         self.bot.handle(self.event());self.bot.handle(self.event());self.assertEqual(len(self.ai.calls),1)
 
+class PersonalizationTests(unittest.TestCase):
+    setUp=BotTests.setUp
+    tearDown=BotTests.tearDown
+    event=BotTests.event
+    def command(self,text,actor=OWNER):
+        self.bot.handle({'message':{'chat':{'id':actor,'type':'private'},'from':{'id':actor},'text':text}})
+    def test_example_is_used_for_next_reply(self):
+        self.command('/example как дела? => да норм, ты как')
+        self.bot.handle(self.event())
+        self.assertEqual(self.ai.examples,[{'incoming':'как дела?','owner_reply':'да норм, ты как'}])
+    def test_customer_cannot_change_personality(self):
+        self.command('/example привет => чужой ответ',CUSTOMER)
+        self.command('/style формальный',CUSTOMER)
+        self.assertEqual(self.store.examples(),[])
+        self.assertEqual(self.store.get('style','default'),'default')
+    def test_examples_are_bounded(self):
+        for i in range(10):self.command(f'/example вопрос {chr(65+i)} => ответ {chr(65+i)}')
+        values=self.store.examples();self.assertEqual(len(values),8)
+        self.assertEqual(values[0]['incoming'],'вопрос C')
+    def test_duplicate_example_not_repeated(self):
+        self.command('/example привет => здарова');self.command('/example привет => здарова')
+        self.assertEqual(len(self.store.examples()),1)
+    def test_sensitive_example_is_rejected(self):
+        self.command('/example какой пароль? => секрет 123456')
+        self.assertEqual(self.store.examples(),[])
+    def test_invalid_example_is_rejected(self):
+        for text in ['/example привет','/example => ответ','/example привет =>','/example '+('x'*501)+' => ответ']:self.command(text)
+        self.assertEqual(self.store.examples(),[])
+    def test_clear_style_keeps_manual_pause(self):
+        self.command('/example привет => здарова');self.command('/pause');self.command('/clearstyle')
+        self.assertEqual(self.store.examples(),[]);self.assertTrue(self.store.paused())
+    def test_style_change_cancels_inflight_reply(self):
+        self.executor.defer=True;self.bot.handle(self.event());self.command('/example привет => здарова');self.executor.finish()
+        self.assertFalse(self.api.sent())
+    def test_style_samples_not_added_to_actual_business_reply(self):
+        self.command('/example как дела? => да норм, ты как');self.bot.handle(self.event())
+        self.assertNotIn('owner_reply',self.api.sent()[0]['text'])
+
 class ProviderTests(unittest.TestCase):
     def test_valid_json_reply(self):
         config=Config(bot_token='fake',openai_key='fake');provider=OpenAI(config)
         response={'choices':[{'message':{'content':json.dumps({'action':'reply','reply':'Привет!'})}}]}
         with patch('urllib.request.urlopen',return_value=io.BytesIO(json.dumps(response).encode())):
             self.assertEqual(provider.reply('Привет','Кратко'),'Привет!')
+    def test_style_and_examples_are_quoted_in_provider_request(self):
+        provider=OpenAI(Config(bot_token='fake',openai_key='fake'))
+        samples=[{'incoming':'привет','owner_reply':'здарова'}]
+        response={'choices':[{'message':{'content':json.dumps({'action':'reply','reply':'приветик'})}}]}
+        with patch('urllib.request.urlopen',return_value=io.BytesIO(json.dumps(response).encode())) as network:
+            provider.reply('Как ты?','Коротко, на ты',samples)
+            body=json.loads(network.call_args.args[0].data)
+            data=json.loads(body['messages'][1]['content'])
+            self.assertEqual(data['style_examples'],samples)
+            self.assertEqual(data['owner_style'],'Коротко, на ты')
+            self.assertEqual(len(body['messages']),2)
     def test_secrets_blocked_before_network(self):
         with patch('urllib.request.urlopen') as network:
             self.assertIsNone(OpenAI(Config(bot_token='fake')).reply('Мой пароль 123456',''))
