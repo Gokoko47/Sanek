@@ -1,0 +1,15 @@
+.git
+**/__pycache__
+**/*.pyc
+.env
+**/.env
+*.sqlite3
+**/*.sqlite3
+**/*.sqlite3-*
+data
+business/data
+Telegram
+work
+demo
+overlay
+generated_images

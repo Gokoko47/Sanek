@@ -92,3 +92,15 @@ python3 -m unittest discover -s business/tests -v
 Проверки используют подмены Telegram/ИИ, не требуют токенов и не отправляют сообщений. Отдельный workflow — `.github/workflows/business.yml`.
 
 Ссылки на API: [BusinessConnection](https://core.telegram.org/bots/api#businessconnection), [BusinessBotRights](https://core.telegram.org/bots/api#businessbotrights), [sendMessage](https://core.telegram.org/bots/api#sendmessage). Структура `rights.can_reply` и правило 24 часов сверены с актуальным исходником SDK `python-telegram-bot` (`src/telegram/_business.py`); устаревшее поле `BusinessConnection.can_reply` не используется.
+
+## Вариант размещения: Railway из этого репозитория
+
+Подготовлены `railway.toml` и `business/Dockerfile`. Это конфигурация, а не уже созданный/оплаченный сервер. Актуальные условия и стоимость проверьте в Railway до включения постоянной работы.
+
+1. Войдите на [railway.com](https://railway.com) через GitHub → создайте проект из GitHub-репозитория **Gokoko47/Sanek**. При запросе доступа разрешите Railway доступ к этому репозиторию. Рабочий каталог оставьте корнем репозитория: конфигурация сама выберет Dockerfile Business-бота.
+2. Добавьте к сервису постоянный **Volume** с точкой монтирования `/data`. Оставьте **одну реплику** и выключите режим сна/Serverless, если он включён: polling-бот должен работать постоянно. Настройка публичного HTTP-домена не нужна.
+3. В **Variables** добавьте `TELEGRAM_BOT_TOKEN` и `TELEGRAM_OWNER_ID=0`. `STATE_PATH` укажите `/data/business.sqlite3`. Запустите Deploy. Без токена начальный автозапуск может завершиться ошибкой — после сохранения Variables выполните Deploy заново.
+4. В Telegram отправьте своему боту `/id`, скопируйте показанный числовой ID. В Variables замените `TELEGRAM_OWNER_ID` на этот ID, добавьте `OPENAI_API_KEY` и, при желании, `OPENAI_MODEL` / `REPLY_STYLE`. Примените изменения и дождитесь запуска сервиса.
+5. Подключите бота в **Telegram Business → Чат-боты**, выберите нужные переписки, разрешите ответы. Для проверки отправьте новое сообщение с другого аккаунта.
+
+Настройки переменных находятся на стороне Railway, а не в репозитории. Логи показывают состояние сервиса и коды ошибок без токенов и содержимого сообщений. При сбое сначала проверьте токен, Business Mode в BotFather, собственный ID, право ответа, ключ ИИ и наличие постоянного диска. Конфигурация контейнера и запуск на Railway ещё требуют проверки после настройки пользовательского аккаунта и переменных.
