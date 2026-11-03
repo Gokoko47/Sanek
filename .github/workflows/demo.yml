@@ -1,0 +1,54 @@
+name: Pakostnik Demo APK
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'demo/**'
+      - 'overlay/TMessagesProj/src/main/java/org/telegram/messenger/pakostnik/ConsolePalette.java'
+      - '.github/workflows/demo.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pakostnik-demo
+  cancel-in-progress: true
+jobs:
+  demo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Install SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build offline demo without Telegram credentials
+        run: gradle -p demo :app:assembleDebug --no-daemon
+      - name: Verify APK signature and permissions
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose demo/app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump permissions demo/app/build/outputs/apk/debug/app-debug.apk
+          python3 - <<'PYCODE'
+          import subprocess
+          permissions=subprocess.check_output(['bash','-c','"$ANDROID_HOME/build-tools/35.0.0/aapt" dump permissions demo/app/build/outputs/apk/debug/app-debug.apk'],text=True)
+          assert 'android.permission.INTERNET' not in permissions, 'Demo must remain offline'
+          PYCODE
+          cd demo/app/build/outputs/apk/debug
+          sha256sum app-debug.apk > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pakostnik-demo-apk
+          path: |
+            demo/app/build/outputs/apk/debug/app-debug.apk
+            demo/app/build/outputs/apk/debug/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14

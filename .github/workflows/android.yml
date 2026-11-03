@@ -2,6 +2,13 @@ name: Pakostnik Android APK
 on:
   push:
     branches: [main]
+    paths:
+      - 'apply.py'
+      - 'bootstrap.sh'
+      - 'overlay/**'
+      - 'server/**'
+      - 'tests/**'
+      - '.github/workflows/android.yml'
   workflow_dispatch:
 permissions:
   contents: read
