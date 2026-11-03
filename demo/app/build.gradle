@@ -10,9 +10,12 @@ android {
         versionName '0.1-demo'
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
-    sourceSets.main.java {
-        srcDirs = ['src/main/java', '../../overlay/TMessagesProj/src/main/java']
-        include 'ai/pakostnik/demo/**'
-        include 'org/telegram/messenger/pakostnik/ConsolePalette.java'
-    }
+    sourceSets.main.java.srcDir(layout.buildDirectory.dir('generated/palette'))
 }
+tasks.register('preparePalette', Copy) {
+    from('../../overlay/TMessagesProj/src/main/java/org/telegram/messenger/pakostnik') {
+        include 'ConsolePalette.java'
+    }
+    into(layout.buildDirectory.dir('generated/palette/org/telegram/messenger/pakostnik'))
+}
+tasks.named('preBuild').configure { dependsOn 'preparePalette' }
