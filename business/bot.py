@@ -53,16 +53,17 @@ class Config:
     manual_pause_seconds: int = 1800
 
     @classmethod
-    def env(cls) -> 'Config':
-        config = cls(bot_token=os.environ.get('TELEGRAM_BOT_TOKEN', ''),
-                     owner_id=int(os.environ.get('TELEGRAM_OWNER_ID', '0')),
-                     openai_key=os.environ.get('OPENAI_API_KEY', ''),
-                     model=os.environ.get('OPENAI_MODEL', 'gpt-4.1-mini'),
-                     style=os.environ.get('REPLY_STYLE', cls.style),
-                     db_path=os.environ.get('STATE_PATH', cls.db_path),
-                     max_replies_per_hour=int(os.environ.get('MAX_REPLIES_PER_HOUR', '60')),
-                     cooldown_seconds=int(os.environ.get('CHAT_COOLDOWN_SECONDS', '5')),
-                     manual_pause_seconds=int(os.environ.get('MANUAL_PAUSE_SECONDS', '1800')))
+    def env(cls, values: dict[str, str] | None = None) -> 'Config':
+        source = os.environ if values is None else values
+        config = cls(bot_token=source.get('TELEGRAM_BOT_TOKEN', ''),
+                     owner_id=int(source.get('TELEGRAM_OWNER_ID', '0')),
+                     openai_key=source.get('OPENAI_API_KEY', ''),
+                     model=source.get('OPENAI_MODEL', 'gpt-4.1-mini'),
+                     style=source.get('REPLY_STYLE', cls.style),
+                     db_path=source.get('STATE_PATH', cls.db_path),
+                     max_replies_per_hour=int(source.get('MAX_REPLIES_PER_HOUR', '60')),
+                     cooldown_seconds=int(source.get('CHAT_COOLDOWN_SECONDS', '5')),
+                     manual_pause_seconds=int(source.get('MANUAL_PAUSE_SECONDS', '1800')))
         if not re.fullmatch(r'\d+:[A-Za-z0-9_-]{20,}', config.bot_token):
             raise ValueError('Set TELEGRAM_BOT_TOKEN from BotFather in the server environment')
         if config.owner_id < 0 or config.max_replies_per_hour < 1 or config.cooldown_seconds < 0 or config.manual_pause_seconds < 0 or len(config.style) > 500:
@@ -441,10 +442,10 @@ class BusinessBot:
         self.pool.shutdown(wait=True, cancel_futures=True)
 
 
-def main():
+def main(values: dict[str, str] | None = None):
     logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
     try:
-        config = Config.env()
+        config = Config.env(values)
         bot = BusinessBot(config)
         def stop(*_):
             bot.running = False
