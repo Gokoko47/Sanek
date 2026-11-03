@@ -1,0 +1,21 @@
+# Template: configure the user, repository path and private environment file before installation.
+[Unit]
+Description=Pakostnik Telegram Business replies
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=pakostnik
+WorkingDirectory=/opt/pakostnik/Sanek
+EnvironmentFile=/etc/pakostnik-business.env
+ExecStart=/usr/bin/python3 -m business.bot
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=120
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
