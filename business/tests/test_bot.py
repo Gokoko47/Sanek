@@ -25,9 +25,10 @@ class TelegramFake:
     def sent(self):return [p for m,p in self.calls if m=='sendMessage' and 'business_connection_id' in p]
 
 class AIFake:
-    def __init__(self):self.calls=[];self.examples=[];self.answer='Привет! Как настроение?';self.hook=None
-    def reply(self,text,style,examples=None):
+    def __init__(self):self.calls=[];self.context=[];self.examples=[];self.answer='Привет! Как настроение?';self.hook=None
+    def reply(self,text,style,examples=None,context=None):
         self.examples=examples or []
+        self.context=context or []
         self.calls.append((text,style))
         if self.hook:self.hook()
         return self.answer
@@ -43,10 +44,10 @@ class ExecutorFake:
 
 class BotTests(unittest.TestCase):
     def setUp(self):
-        self.config=Config(bot_token='123:'+'x'*30,owner_id=OWNER,openai_key='fake',db_path=':memory:',cooldown_seconds=0)
+        self.config=Config(bot_token='123:'+'x'*30,owner_id=OWNER,openai_key='fake',db_path=':memory:',cooldown_seconds=0,debounce_seconds=0)
         self.api=TelegramFake();self.ai=AIFake();self.store=Store(':memory:');self.executor=ExecutorFake()
         self.bot=BusinessBot(self.config,self.api,self.ai,self.store,self.executor,clock=lambda:NOW)
-    def tearDown(self):self.store.db.close()
+    def tearDown(self):self.bot.close();self.store.db.close()
     def event(self,mid=1,text='Привет!',actor=CUSTOMER,**extra):
         m={'business_connection_id':CID,'chat':{'id':CUSTOMER,'type':'private'},'from':{'id':actor},'message_id':mid,'date':NOW,'text':text}
         m.update(extra);return {'update_id':mid,'business_message':m}
